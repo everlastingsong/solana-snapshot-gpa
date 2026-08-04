@@ -19,6 +19,9 @@ struct Record {
     owner: String,
     data_len: u64,
     lamports: u64,
+    slot: u64,
+    id: u64,
+    offset: usize,
     write_version: u64,
     data: String,
 }
@@ -36,21 +39,24 @@ impl CsvDumper {
         }
     }
 
-    pub(crate) fn dump_append_vec(&mut self, append_vec: AppendVec) {
+    pub(crate) fn dump_append_vec(&mut self, slot: u64, id: u64, append_vec: AppendVec) {
         for account in append_vec_iter(Rc::new(append_vec)) {
             let account = account.access().unwrap();
             if self.filter.is_match(&account) {
-                self.dump_account(account);
+                self.dump_account(slot, id, account);
             }
         }
     }
 
-    pub(crate) fn dump_account(&mut self, account: StoredAccountMeta) {
+    pub(crate) fn dump_account(&mut self, slot: u64, id: u64, account: StoredAccountMeta) {
         let record = Record {
             pubkey: account.meta.pubkey.to_string(),
             owner: account.account_meta.owner.to_string(),
             data_len: account.meta.data_len,
             lamports: account.account_meta.lamports,
+            slot,
+            id,
+            offset: account.offset,
             write_version: account.meta.write_version,
             data: base64::encode(account.data),
         };

@@ -4,10 +4,11 @@ use crate::filter::AccountFilter;
 use clap::Parser;
 use log::{error, info};
 use reqwest::blocking::Response;
-use solana_snapshot_etl::archived::ArchiveSnapshotExtractor;
-use solana_snapshot_etl::{AppendVecIterator, SnapshotExtractor};
+use modified_solana_snapshot_etl::{AppendVecIterator, SnapshotExtractor, ArchiveSnapshotExtractor};
 use std::fs::{File};
 use std::path::{Path};
+
+mod modified_solana_snapshot_etl;
 
 mod csv;
 mod filter;
@@ -59,7 +60,8 @@ fn _main() -> Result<(), Box<dyn std::error::Error>> {
     let mut processed = 0;
     let mut writer = CsvDumper::new(filter, args.noheader);
     for append_vec in loader.iter() {
-        writer.dump_append_vec(append_vec?);
+        let (slot, id, append_vec) = append_vec?;
+        writer.dump_append_vec(slot, id, append_vec);
 
         processed += 1;
         if processed % 100 == 0 {
